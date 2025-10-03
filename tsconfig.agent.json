@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "outDir": "dist/agent",
+    "rootDir": "./",
+    "noEmit": false,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"]
+  },
+  "include": [
+    "config/**/*.ts",
+    "model/**/*.ts",
+    "state/**/*.ts",
+    "tools/**/*.ts",
+    "agents/**/*.ts",
+    "orchestrator/**/*.ts",
+    "app/cli.ts",
+    "app/next/app/api/agent/route.ts",
+    "index.ts"
+  ]
+}
