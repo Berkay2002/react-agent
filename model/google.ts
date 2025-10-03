@@ -1,18 +1,10 @@
 /**
- * Gemini 2.5 Pro via Vercel AI SDK provider + Agents SDK adapter.
- * Thinking output stays internal; adjust thinkingConfig when you need deeper reasoning.
+ * Gemini 2.5 models via Vercel AI SDK → OpenAI Agents SDK bridge.
+ * Keep "thinking" responses internal; tune thinkingConfig when you benchmark deeper reasoning.
  */
 import { google } from "@ai-sdk/google";
-import { aisdk } from "@openai/agents-extensions";
+import { aisdk as createAISDKModel } from "@openai/agents-extensions";
 
-export const gemini25Pro = aisdk(
-  google("gemini-2.5-pro", {
-    // TODO: Run the orchestration benchmark suite and set thinkingConfig to the smallest token budget that still clears
-    //       complex tasks (start trials at 2048 tokens, keep includeThoughts false, and capture latency/cost deltas for future tuning).
-    // thinkingConfig: { budgetTokens: 4096, includeThoughts: false },
-  })
-);
+export const gemini25Pro = createAISDKModel(google("gemini-2.5-pro"));
 
-// TODO: After identifying low-stakes operations (rewrite, summarize), export gemini-2.5-flash here and route those
-//       tool calls to it so routine steps use the cheaper model while gemini25Pro stays reserved for reasoning-heavy turns.
-// export const gemini25Flash = aisdk(google("gemini-2.5-flash"));
+export const gemini25Flash = createAISDKModel(google("gemini-2.5-flash"));

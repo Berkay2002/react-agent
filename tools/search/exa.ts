@@ -8,6 +8,45 @@ type SearchResult = {
   snippet: string;
 };
 
+const getHostname = (value: string): string | null => {
+  if (typeof URL.canParse === "function" && !URL.canParse(value)) {
+    return null;
+  }
+
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+};
+
+const domainMatches = (hostname: string, domain: string): boolean => {
+  if (hostname === domain) {
+    return true;
+  }
+  return hostname.endsWith(`.${domain}`);
+};
+
+const isDomainAllowed = (hostname: string): boolean => {
+  for (const deniedDomain of ENV.EXA_DENIED_DOMAINS) {
+    if (domainMatches(hostname, deniedDomain)) {
+      return false;
+    }
+  }
+
+  if (ENV.EXA_ALLOWED_DOMAINS.length === 0) {
+    return true;
+  }
+
+  for (const allowedDomain of ENV.EXA_ALLOWED_DOMAINS) {
+    if (domainMatches(hostname, allowedDomain)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const exaResponseSchema = z.object({
   results: z
     .array(
@@ -30,8 +69,7 @@ export default tool({
   }),
   strict: true,
   execute: async ({ query, numResults, useAutoprompt }) => {
-    // TODO: Load an allow/deny domain list from configuration and filter Exa responses so downstream agents never see
-    //       content outside compliance and brand-safety boundaries.
+    // Filter results against configured allow and deny domain lists so downstream agents stay within policy.
     if (ENV.EXA_API_KEY.length === 0) {
       return "Exa API key not configured.";
     }
@@ -64,6 +102,11 @@ export default tool({
 
     const items: SearchResult[] = [];
     for (const result of parsed.data.results) {
+      const hostname = getHostname(result.url);
+      if (hostname === null || !isDomainAllowed(hostname)) {
+        continue;
+      }
+
       const snippet = result.text?.slice(0, 280) ?? "";
       items.push({ url: result.url, title: result.title, snippet });
     }

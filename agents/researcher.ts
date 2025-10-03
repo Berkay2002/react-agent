@@ -15,6 +15,4 @@ export const Researcher = new Agent({
   instructions: researcherPrompt,
   model: gemini25Pro,
   tools: [tavily, exa, readFile],
-  // TODO: For compliance-sensitive workflows, set toolChoice = "required" so every run executes search before drafting
-  //       an answer, guaranteeing citations reflect fresh tool output.
 });
