@@ -1,6 +1,11 @@
 {
   "permissions": {
-    "allow": ["Bash(npx tsc:*)", "Bash(npm run:*)"],
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npx ultracite check:*)",
+      "Bash(npx ultracite fix:*)"
+    ],
     "deny": [],
     "ask": []
   },

@@ -1,8 +1,9 @@
+/** biome-ignore-all lint/suspicious/noConsole: <Dev> */
 import { NextResponse } from "next/server";
-import { managerAgent } from "@/agents/manager";
-import { researcherAgent } from "@/agents/researcher";
+import { Manager } from "@/agents/manager";
+import { Researcher } from "@/agents/researcher";
 import { runOnce } from "@/orchestrator/runner";
-import { WorkspaceState } from "@/state/workspace";
+import { createWorkspace } from "@/state/workspace";
 
 type RequestBody = {
   message: string;
@@ -22,30 +23,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const selectedAgent =
-      agent === "researcher" ? researcherAgent : managerAgent;
-    const workspace = new WorkspaceState();
+    const selectedAgent = agent === "researcher" ? Researcher : Manager;
+    const workspace = createWorkspace();
 
     const result = await runOnce(selectedAgent, message, workspace);
 
-    const response = result.messages
-      .filter((msg) => msg.role === "assistant")
-      .map((msg) => {
-        if (typeof msg.content === "string") {
-          return msg.content;
-        }
-        if (Array.isArray(msg.content)) {
-          return msg.content
-            .filter((part) => part.type === "text")
-            .map((part) => ("text" in part ? part.text : ""))
-            .join("\n");
-        }
-        return "";
-      })
-      .join("\n\n");
-
     return NextResponse.json({
-      response: response || "Agent completed without a response",
+      response: result.finalOutput ?? "Agent completed without a response",
       operations: workspace.ops,
       vfsSize: workspace.vfs.size,
     });

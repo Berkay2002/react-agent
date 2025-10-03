@@ -1,25 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   AlertCircle,
   Bot,
@@ -30,6 +10,26 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 type Message = {
   role: "user" | "assistant" | "system";
@@ -47,7 +47,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) {
+      return;
+    }
 
     const userMessage: Message = {
       role: "user",
@@ -100,7 +102,7 @@ export default function Home() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">
+          <h1 className="font-bold text-4xl tracking-tight">
             ReAct Agent Tester
           </h1>
           <p className="text-muted-foreground">
@@ -120,10 +122,10 @@ export default function Home() {
                     </CardDescription>
                   </div>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearChat}
                     disabled={messages.length === 0}
+                    onClick={clearChat}
+                    size="sm"
+                    variant="outline"
                   >
                     <Trash2 className="mr-2 size-4" />
                     Clear
@@ -143,12 +145,12 @@ export default function Home() {
                     ) : (
                       messages.map((message, index) => (
                         <div
-                          key={`${message.role}-${index.toString()}`}
                           className={`flex flex-col gap-2 ${
                             message.role === "user"
                               ? "items-end"
                               : "items-start"
                           }`}
+                          key={`${message.role}-${index.toString()}`}
                         >
                           <div className="flex items-center gap-2">
                             <Badge
@@ -160,7 +162,7 @@ export default function Home() {
                             >
                               {message.role}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-muted-foreground text-xs">
                               {message.timestamp.toLocaleTimeString()}
                             </span>
                           </div>
@@ -199,25 +201,31 @@ export default function Home() {
 
                 <div className="space-y-2">
                   <Textarea
-                    placeholder="Type your message here..."
-                    value={input}
+                    className="min-h-[100px]"
+                    disabled={isLoading}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        void handleSubmit();
+                        handleSubmit().catch(() => {
+                          // Ignore errors
+                        });
                       }
                     }}
-                    className="min-h-[100px]"
-                    disabled={isLoading}
+                    placeholder="Type your message here..."
+                    value={input}
                   />
                   <div className="flex justify-between">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Press Enter to send, Shift+Enter for new line
                     </p>
                     <Button
-                      onClick={() => void handleSubmit()}
                       disabled={isLoading || !input.trim()}
+                      onClick={() => {
+                        handleSubmit().catch(() => {
+                          // Ignore errors
+                        });
+                      }}
                     >
                       {isLoading ? (
                         <Loader2 className="mr-2 size-4 animate-spin" />
@@ -242,10 +250,10 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <Select
-                  value={selectedAgent}
                   onValueChange={(value) =>
                     setSelectedAgent(value as AgentType)
                   }
+                  value={selectedAgent}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -278,14 +286,14 @@ export default function Home() {
                     <TabsTrigger value="manager">Manager</TabsTrigger>
                     <TabsTrigger value="researcher">Researcher</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="manager" className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                  <TabsContent className="space-y-2" value="manager">
+                    <p className="text-muted-foreground text-sm">
                       Orchestrates tasks and delegates to specialists
                     </p>
                     <Separator />
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Tools:</p>
-                      <ul className="space-y-1 text-xs text-muted-foreground">
+                      <p className="font-medium text-sm">Tools:</p>
+                      <ul className="space-y-1 text-muted-foreground text-xs">
                         <li>• write_file</li>
                         <li>• edit_file</li>
                         <li>• todo_write</li>
@@ -294,14 +302,14 @@ export default function Home() {
                       </ul>
                     </div>
                   </TabsContent>
-                  <TabsContent value="researcher" className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                  <TabsContent className="space-y-2" value="researcher">
+                    <p className="text-muted-foreground text-sm">
                       Performs web searches and gathers information
                     </p>
                     <Separator />
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Tools:</p>
-                      <ul className="space-y-1 text-xs text-muted-foreground">
+                      <p className="font-medium text-sm">Tools:</p>
+                      <ul className="space-y-1 text-muted-foreground text-xs">
                         <li>• tavily (search)</li>
                         <li>• exa (search)</li>
                         <li>• read_file</li>
@@ -330,7 +338,7 @@ export default function Home() {
           </div>
         </div>
 
-        <footer className="text-center text-sm text-muted-foreground">
+        <footer className="text-center text-muted-foreground text-sm">
           <p>© 2025 ReAct Agent System</p>
         </footer>
       </div>

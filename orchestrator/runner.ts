@@ -73,9 +73,7 @@ export const runner = new Runner({
   ...(modelOverride ? { model: modelOverride } : {}),
 });
 
-export async function runOnce<
-  TAgent extends Agent<WorkspaceState, AgentOutputType>,
->(
+export async function runOnce<TAgent extends Agent<any, any>>(
   agent: TAgent,
   input: string | AgentInputItem[],
   context: WorkspaceState
