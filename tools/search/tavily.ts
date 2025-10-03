@@ -99,7 +99,12 @@ export default tool({
     "High-recall web search for facts. Returns url/title/snippet array.",
   parameters: z.object({
     query: z.string(),
-    max_results: z.number().int().min(MIN_RESULTS).max(MAX_RESULTS).default(DEFAULT_RESULTS),
+    max_results: z
+      .number()
+      .int()
+      .min(MIN_RESULTS)
+      .max(MAX_RESULTS)
+      .default(DEFAULT_RESULTS),
   }),
   strict: true,
   execute: async ({ query, max_results }) => {
@@ -125,7 +130,10 @@ export default tool({
       return "Tavily network error.";
     }
 
-    if (response.status === HTTP_UNAUTHORIZED || response.status === HTTP_FORBIDDEN) {
+    if (
+      response.status === HTTP_UNAUTHORIZED ||
+      response.status === HTTP_FORBIDDEN
+    ) {
       return "Tavily auth or permission error.";
     }
 

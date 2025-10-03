@@ -60,7 +60,9 @@ function parseWorkspaceSnapshot(json: string): WorkspaceSnapshot {
   try {
     parsedJson = JSON.parse(json) as unknown;
   } catch (error) {
-    throw new Error("Failed to parse workspace snapshot JSON.", { cause: error });
+    throw new Error("Failed to parse workspace snapshot JSON.", {
+      cause: error,
+    });
   }
 
   try {
@@ -69,7 +71,7 @@ function parseWorkspaceSnapshot(json: string): WorkspaceSnapshot {
     if (error instanceof ZodError) {
       throw new Error(
         "Workspace snapshot JSON did not match the expected schema.",
-        { cause: error },
+        { cause: error }
       );
     }
     throw error;

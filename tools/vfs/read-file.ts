@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { WorkspaceState } from "../../state/workspace";
 
 const promptPath = fileURLToPath(
-  new URL("../../prompts/read-file.md", import.meta.url),
+  new URL("../../prompts/read-file.md", import.meta.url)
 );
 const description = await readFile(promptPath, "utf8");
 
