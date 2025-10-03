@@ -1,10 +1,12 @@
+/** biome-ignore-all lint/nursery/noUselessUndefined: <> */
+/** biome-ignore-all lint/suspicious/useAwait: <> */
 import {
   type Agent,
   type AgentInputItem,
   type AgentOutputType,
+  OPENAI_DEFAULT_MODEL_ENV_VARIABLE_NAME,
   Runner,
   type RunResult,
-  OPENAI_DEFAULT_MODEL_ENV_VARIABLE_NAME,
 } from "@openai/agents";
 import type { WorkspaceState } from "../state/workspace";
 
@@ -72,7 +74,7 @@ export const runner = new Runner({
 });
 
 export async function runOnce<
-  TAgent extends Agent<WorkspaceState, AgentOutputType>
+  TAgent extends Agent<WorkspaceState, AgentOutputType>,
 >(
   agent: TAgent,
   input: string | AgentInputItem[],

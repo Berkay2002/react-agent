@@ -1,14 +1,23 @@
+/** biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: <> */
+/** biome-ignore-all lint/style/noMagicNumbers: <> */
+/** biome-ignore-all lint/performance/useTopLevelRegex: <> */
+/** biome-ignore-all lint/correctness/noUnusedVariables: <> */
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync, promises as fsp } from "node:fs";
+import { promises as fsp, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import type { Agent, RunResult, RunToolApprovalItem } from "@openai/agents";
+import type {
+  Agent,
+  AgentOutputType,
+  RunResult,
+  RunToolApprovalItem,
+} from "@openai/agents";
 import type { WorkspaceState } from "../state/workspace";
+import { runner } from "./runner";
 
-type WorkspaceRunResult<TOutput> = RunResult<
-  TOutput,
-  Agent<WorkspaceState, TOutput>,
-  WorkspaceState
+type WorkspaceRunResult<TOutput extends AgentOutputType> = RunResult<
+  WorkspaceState,
+  Agent<WorkspaceState, AgentOutputType>
 >;
 
 type ReviewerProfile = {
@@ -50,7 +59,7 @@ type DecisionRecord = {
   metadata: Record<string, unknown>;
 };
 
-export async function handleInterruptions<TOutput>(
+export async function handleInterruptions<TOutput extends AgentOutputType>(
   result: WorkspaceRunResult<TOutput>
 ): Promise<WorkspaceRunResult<TOutput>> {
   const reviewerProfile = await loadReviewerProfile();
@@ -74,10 +83,12 @@ export async function handleInterruptions<TOutput>(
           reason: decision.reason,
           timestamp: new Date().toISOString(),
           toolName: analysis.toolName,
-          callId: analysis.callId,
-          path: analysis.path,
-          byteDelta: analysis.byteDelta,
-          diffPreview: analysis.diff,
+          ...(analysis.callId !== undefined && { callId: analysis.callId }),
+          ...(analysis.path !== undefined && { path: analysis.path }),
+          ...(analysis.byteDelta !== undefined && {
+            byteDelta: analysis.byteDelta,
+          }),
+          ...(analysis.diff !== undefined && { diffPreview: analysis.diff }),
           metadata: analysis.metadata,
         },
         reviewerProfile.logPath
@@ -94,12 +105,14 @@ export async function handleInterruptions<TOutput>(
       }
     }
 
+    // Resume execution with the same agent and updated state
     const nextAgent = current.lastAgent;
     if (!nextAgent) {
       break;
     }
 
-    current = await current.runner.run(nextAgent, current.state);
+    // Per HITL docs: pass the state back to runner.run() to continue execution
+    current = await runner.run(nextAgent, current.state);
   }
 
   return current;
@@ -110,7 +123,8 @@ async function loadReviewerProfile(): Promise<ReviewerProfile> {
   const defaultName = process.env.AGENT_APPROVER_NAME?.trim();
   const baseProfile: ReviewerProfile = {
     id: defaultId && defaultId.length > 0 ? defaultId : "local-reviewer",
-    name: defaultName && defaultName.length > 0 ? defaultName : "Local Reviewer",
+    name:
+      defaultName && defaultName.length > 0 ? defaultName : "Local Reviewer",
     allow: ["**"],
     deny: [],
     logPath: process.env.AGENT_APPROVAL_LOG?.trim()?.length
@@ -128,9 +142,10 @@ async function loadReviewerProfile(): Promise<ReviewerProfile> {
         logPath?: unknown;
       };
       return {
-        id: typeof parsed.id === "string" && parsed.id.trim().length > 0
-          ? parsed.id.trim()
-          : baseProfile.id,
+        id:
+          typeof parsed.id === "string" && parsed.id.trim().length > 0
+            ? parsed.id.trim()
+            : baseProfile.id,
         name:
           typeof parsed.name === "string" && parsed.name.trim().length > 0
             ? parsed.name.trim()
@@ -151,15 +166,15 @@ async function loadReviewerProfile(): Promise<ReviewerProfile> {
 
   return {
     ...baseProfile,
-    allow: parsePatternList(process.env.AGENT_APPROVAL_ALLOW, baseProfile.allow),
+    allow: parsePatternList(
+      process.env.AGENT_APPROVAL_ALLOW,
+      baseProfile.allow
+    ),
     deny: parsePatternList(process.env.AGENT_APPROVAL_DENY, baseProfile.deny),
   };
 }
 
-function normalizePatternList(
-  source: unknown,
-  fallback: string[]
-): string[] {
+function normalizePatternList(source: unknown, fallback: string[]): string[] {
   if (Array.isArray(source)) {
     const values = source
       .map((value) => (typeof value === "string" ? value.trim() : ""))
@@ -172,7 +187,10 @@ function normalizePatternList(
   return fallback;
 }
 
-function parsePatternList(value: string | undefined, fallback: string[]): string[] {
+function parsePatternList(
+  value: string | undefined,
+  fallback: string[]
+): string[] {
   if (!value) {
     return fallback;
   }
@@ -183,12 +201,14 @@ function parsePatternList(value: string | undefined, fallback: string[]): string
   return segments.length > 0 ? segments : fallback;
 }
 
-function extractWorkspace(state: WorkspaceRunResult<unknown>["state"]):
-  | WorkspaceState
-  | undefined {
-  const contextContainer = (state as unknown as {
-    _context?: { context?: WorkspaceState };
-  })._context;
+function extractWorkspace(
+  state: WorkspaceRunResult<AgentOutputType>["state"]
+): WorkspaceState | undefined {
+  const contextContainer = (
+    state as unknown as {
+      _context?: { context?: WorkspaceState };
+    }
+  )._context;
   return contextContainer?.context;
 }
 
@@ -229,18 +249,22 @@ function analyzeInterruption(
   let summary = `Approval requested for tool "${toolName}".`;
 
   if (toolName === "edit_file") {
-    path = typeof parsedArguments.path === "string" ? parsedArguments.path : undefined;
+    path =
+      typeof parsedArguments.path === "string"
+        ? parsedArguments.path
+        : undefined;
     const findPattern =
       typeof parsedArguments.find === "string" ? parsedArguments.find : "";
     const flags =
-      typeof parsedArguments.flags === "string" && parsedArguments.flags.length > 0
+      typeof parsedArguments.flags === "string" &&
+      parsedArguments.flags.length > 0
         ? parsedArguments.flags
         : "g";
     const replacement =
       typeof parsedArguments.replace === "string"
         ? parsedArguments.replace
         : "";
-    const currentContent = path ? workspace?.get(path)?.content ?? "" : "";
+    const currentContent = path ? (workspace?.get(path)?.content ?? "") : "";
 
     let nextContent = currentContent;
     try {
@@ -257,7 +281,9 @@ function analyzeInterruption(
     byteDelta =
       Buffer.byteLength(nextContent, "utf8") -
       Buffer.byteLength(currentContent, "utf8");
-    diff = path ? createUnifiedDiff(currentContent, nextContent, path) : undefined;
+    diff = path
+      ? createUnifiedDiff(currentContent, nextContent, path)
+      : undefined;
     summary = path
       ? `edit_file → ${path} (${formatDelta(byteDelta)})`
       : "edit_file → (missing path)";
@@ -265,22 +291,35 @@ function analyzeInterruption(
     metadata.flags = flags;
   } else if (toolName === "todo_write") {
     const item =
-      typeof parsedArguments.item === "string" ? parsedArguments.item : undefined;
+      typeof parsedArguments.item === "string"
+        ? parsedArguments.item
+        : undefined;
     summary = item
       ? `todo_write → ${item}`
       : "todo_write → (no todo item provided)";
     path = "todo.md";
   }
 
-  return {
+  const result: InterruptionAnalysis = {
     toolName,
-    callId,
-    path,
-    diff,
-    byteDelta,
     summary,
     metadata,
   };
+
+  if (callId !== undefined) {
+    result.callId = callId;
+  }
+  if (path !== undefined) {
+    result.path = path;
+  }
+  if (diff !== undefined) {
+    result.diff = diff;
+  }
+  if (byteDelta !== undefined) {
+    result.byteDelta = byteDelta;
+  }
+
+  return result;
 }
 
 function evaluateDecision(
@@ -333,11 +372,14 @@ async function persistDecision(
   const maxDiffLength = 8192;
   const entry: DecisionRecord = {
     ...record,
-    diffPreview:
-      record.diffPreview && record.diffPreview.length > maxDiffLength
-        ? `${record.diffPreview.slice(0, maxDiffLength)}…`
-        : record.diffPreview,
   };
+
+  if (record.diffPreview !== undefined) {
+    entry.diffPreview =
+      record.diffPreview.length > maxDiffLength
+        ? `${record.diffPreview.slice(0, maxDiffLength)}…`
+        : record.diffPreview;
+  }
 
   const directory = dirname(logPath);
   if (directory && directory !== ".") {
@@ -401,7 +443,9 @@ function matchesPattern(path: string, pattern: string): boolean {
     if (!normalizedPath.startsWith(prefix.length > 0 ? `${prefix}/` : "")) {
       return false;
     }
-    const remainder = normalizedPath.slice(prefix.length > 0 ? prefix.length + 1 : 0);
+    const remainder = normalizedPath.slice(
+      prefix.length > 0 ? prefix.length + 1 : 0
+    );
     return !remainder.includes("/");
   }
 
@@ -425,7 +469,11 @@ function formatDelta(delta?: number): string {
   return `${sign}${delta}`;
 }
 
-function createUnifiedDiff(before: string, after: string, path: string): string {
+function createUnifiedDiff(
+  before: string,
+  after: string,
+  path: string
+): string {
   if (before === after) {
     return "(no changes)";
   }

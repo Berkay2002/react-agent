@@ -8,6 +8,8 @@ type SearchResult = {
   snippet: string;
 };
 
+const MAX_SNIPPET_LENGTH = 280;
+
 const getHostname = (value: string): string | null => {
   if (typeof URL.canParse === "function" && !URL.canParse(value)) {
     return null;
@@ -107,7 +109,7 @@ export default tool({
         continue;
       }
 
-      const snippet = result.text?.slice(0, 280) ?? "";
+      const snippet = result.text?.slice(0, MAX_SNIPPET_LENGTH) ?? "";
       items.push({ url: result.url, title: result.title, snippet });
     }
 
