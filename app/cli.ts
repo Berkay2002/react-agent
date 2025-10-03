@@ -13,16 +13,27 @@ function writeError(text: string): void {
 
 async function main(): Promise<void> {
   const workspace = createWorkspace();
-  let result = await runOnce(
+  const result = await runOnce(
     Manager,
     "Research the latest on topic X and save a brief to notes/today.md",
     workspace
   );
 
-  result = await handleInterruptions(result);
+  const finalResult = await handleInterruptions(
+    result as Parameters<typeof handleInterruptions>[0]
+  );
 
   writeLine("\n=== FINAL OUTPUT ===\n");
-  writeLine(result.finalOutput ?? "(no output)");
+  const output = finalResult.finalOutput;
+  let formattedOutput: string;
+  if (typeof output === "string") {
+    formattedOutput = output;
+  } else if (output) {
+    formattedOutput = JSON.stringify(output);
+  } else {
+    formattedOutput = "(no output)";
+  }
+  writeLine(formattedOutput);
 
   writeLine("\n=== VFS ===");
   for (const [path, entry] of workspace.vfs.entries()) {

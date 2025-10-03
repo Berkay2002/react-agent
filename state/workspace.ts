@@ -76,10 +76,22 @@ function buildDiffOperations(
 
   for (let i = beforeLength - 1; i >= 0; i -= 1) {
     for (let j = afterLength - 1; j >= 0; j -= 1) {
-      if (before[i] === after[j]) {
-        table[i][j] = table[i + 1][j + 1] + 1;
-      } else {
-        table[i][j] = Math.max(table[i + 1][j], table[i][j + 1]);
+      const beforeLine = before[i];
+      const afterLine = after[j];
+      const tableRowI = table[i];
+      const tableRowIPlus1 = table[i + 1];
+
+      if (beforeLine === afterLine && tableRowI && tableRowIPlus1) {
+        const nextCell = tableRowIPlus1[j + 1];
+        if (typeof nextCell === "number") {
+          tableRowI[j] = nextCell + 1;
+        }
+      } else if (tableRowI && tableRowIPlus1) {
+        const cellBelow = tableRowIPlus1[j];
+        const cellRight = tableRowI[j + 1];
+        if (typeof cellBelow === "number" && typeof cellRight === "number") {
+          tableRowI[j] = Math.max(cellBelow, cellRight);
+        }
       }
     }
   }
@@ -91,10 +103,15 @@ function buildDiffOperations(
   let newLine = 1;
 
   while (i < beforeLength && j < afterLength) {
-    if (before[i] === after[j]) {
+    const beforeLine = before[i];
+    const afterLine = after[j];
+    const tableRowI = table[i];
+    const tableRowIPlus1 = table[i + 1];
+
+    if (beforeLine !== undefined && beforeLine === afterLine) {
       operations.push({
         type: "context",
-        line: before[i],
+        line: beforeLine,
         oldLine,
         newLine,
       });
@@ -102,10 +119,14 @@ function buildDiffOperations(
       j += 1;
       oldLine += 1;
       newLine += 1;
-    } else if (table[i + 1][j] >= table[i][j + 1]) {
+    } else if (
+      tableRowIPlus1 &&
+      tableRowI &&
+      (tableRowIPlus1[j] ?? 0) >= (tableRowI[j + 1] ?? 0)
+    ) {
       operations.push({
         type: "remove",
-        line: before[i],
+        line: beforeLine ?? "",
         oldLine,
         newLine,
       });
@@ -114,7 +135,7 @@ function buildDiffOperations(
     } else {
       operations.push({
         type: "add",
-        line: after[j],
+        line: afterLine ?? "",
         oldLine,
         newLine,
       });
@@ -124,9 +145,10 @@ function buildDiffOperations(
   }
 
   while (i < beforeLength) {
+    const beforeLine = before[i];
     operations.push({
       type: "remove",
-      line: before[i],
+      line: beforeLine ?? "",
       oldLine,
       newLine,
     });
@@ -135,9 +157,10 @@ function buildDiffOperations(
   }
 
   while (j < afterLength) {
+    const afterLine = after[j];
     operations.push({
       type: "add",
-      line: after[j],
+      line: afterLine ?? "",
       oldLine,
       newLine,
     });

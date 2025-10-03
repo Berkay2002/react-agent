@@ -1,17 +1,11 @@
 import { type RunContext, tool } from "@openai/agents";
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { EDIT_FILE_PROMPT } from "../../prompts/index";
 import type { WorkspaceState } from "../../state/workspace";
-
-const promptPath = fileURLToPath(
-  new URL("../../prompts/edit-file.md", import.meta.url)
-);
-const description = await readFile(promptPath, "utf8");
 
 export default tool({
   name: "edit_file",
-  description,
+  description: EDIT_FILE_PROMPT,
   parameters: z.object({
     path: z.string(),
     find: z.string(),

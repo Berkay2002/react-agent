@@ -1,3 +1,7 @@
+/** biome-ignore-all lint/performance/noNamespaceImport: <> */
+/** biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: <> */
+/** biome-ignore-all lint/nursery/noShadow: <> */
+/** biome-ignore-all lint/security/noDangerouslySetInnerHtml: <> */
 "use client";
 
 import * as React from "react";
@@ -104,7 +108,10 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-function ChartTooltipContent({
+function ChartTooltipContent<
+  TValue extends number | string = number,
+  TName extends number | string = string,
+>({
   active,
   payload,
   className,
@@ -118,7 +125,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+}: RechartsPrimitive.TooltipContentProps<TValue, TName> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean;
     hideIndicator?: boolean;
@@ -258,11 +265,12 @@ function ChartLegendContent({
   payload,
   verticalAlign = "bottom",
   nameKey,
-}: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-    hideIcon?: boolean;
-    nameKey?: string;
-  }) {
+}: React.ComponentProps<"div"> & {
+  payload?: RechartsPrimitive.LegendPayload[];
+  verticalAlign?: "top" | "bottom" | "middle";
+  hideIcon?: boolean;
+  nameKey?: string;
+}) {
   const { config } = useChart();
 
   if (!payload?.length) {

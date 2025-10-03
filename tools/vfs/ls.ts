@@ -1,17 +1,11 @@
 import { type RunContext, tool } from "@openai/agents";
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { LS_PROMPT } from "@/prompts";
 import type { WorkspaceState } from "../../state/workspace";
-
-const promptPath = fileURLToPath(
-  new URL("../../prompts/ls.md", import.meta.url)
-);
-const description = await readFile(promptPath, "utf8");
 
 export default tool({
   name: "ls",
-  description,
+  description: LS_PROMPT,
   parameters: z.object({}),
   strict: true,
   execute: (_args, ctx?: RunContext<WorkspaceState>) => {
