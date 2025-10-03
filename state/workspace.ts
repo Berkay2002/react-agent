@@ -50,18 +50,24 @@ type DiffOperation =
   | { type: "remove"; line: string; oldLine: number; newLine: number }
   | { type: "context"; line: string; oldLine: number; newLine: number };
 
+const LINE_SPLIT_REGEX = /\r?\n/;
+
 function splitLines(text: string): string[] {
   if (text.length === 0) {
     return [];
   }
-  const lines = text.split(/\r?\n/);
-  if (lines.length > 0 && lines[lines.length - 1] === "") {
+  const lines = text.split(LINE_SPLIT_REGEX);
+  if (lines.length > 0 && lines.at(-1) === "") {
     lines.pop();
   }
   return lines;
 }
 
-function buildDiffOperations(before: string[], after: string[]): DiffOperation[] {
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <16>
+function buildDiffOperations(
+  before: string[],
+  after: string[]
+): DiffOperation[] {
   const beforeLength = before.length;
   const afterLength = after.length;
   const table: number[][] = Array.from({ length: beforeLength + 1 }, () =>
@@ -201,12 +207,20 @@ function createUnifiedDiff(path: string, operations: DiffOperation[]): string {
   return patchLines.join("\n");
 }
 
-function createDiffSummary(path: string, before: string, after: string): DiffSummary {
+function createDiffSummary(
+  path: string,
+  before: string,
+  after: string
+): DiffSummary {
   const beforeLines = splitLines(before);
   const afterLines = splitLines(after);
   const operations = buildDiffOperations(beforeLines, afterLines);
-  const addedLines = operations.filter((operation) => operation.type === "add").length;
-  const removedLines = operations.filter((operation) => operation.type === "remove").length;
+  const addedLines = operations.filter(
+    (operation) => operation.type === "add"
+  ).length;
+  const removedLines = operations.filter(
+    (operation) => operation.type === "remove"
+  ).length;
   const beforeBytes = Buffer.byteLength(before, "utf8");
   const afterBytes = Buffer.byteLength(after, "utf8");
   const deltaBytes = afterBytes - beforeBytes;

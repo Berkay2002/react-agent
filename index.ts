@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noBarrelFile: <--->
 export * from "./agents/manager";
 export * from "./agents/researcher";
 export * from "./model/google";

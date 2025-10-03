@@ -1,10 +1,17 @@
 import { type RunContext, tool } from "@openai/agents";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import type { WorkspaceState } from "../../state/workspace";
 
+const promptPath = fileURLToPath(
+  new URL("../../prompts/edit-file.md", import.meta.url),
+);
+const description = await readFile(promptPath, "utf8");
+
 export default tool({
   name: "edit_file",
-  description: "Regex find/replace on a virtual file.",
+  description,
   parameters: z.object({
     path: z.string(),
     find: z.string(),
@@ -13,7 +20,7 @@ export default tool({
   }),
   needsApproval: true,
   strict: true,
-  execute: async (
+  execute: (
     { path, find, replace, flags },
     ctx?: RunContext<WorkspaceState>
   ) => {

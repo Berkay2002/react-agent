@@ -5,20 +5,20 @@ import { z } from "zod";
 import type { WorkspaceState } from "../../state/workspace";
 
 const promptPath = fileURLToPath(
-  new URL("../../prompts/todo-write.md", import.meta.url),
+  new URL("../../prompts/ls.md", import.meta.url),
 );
 const description = await readFile(promptPath, "utf8");
 
 export default tool({
-  name: "todo_write",
+  name: "ls",
   description,
-  parameters: z.object({ item: z.string() }),
+  parameters: z.object({}),
   strict: true,
-  execute: ({ item }, ctx?: RunContext<WorkspaceState>) => {
+  execute: (_args, ctx?: RunContext<WorkspaceState>) => {
     if (!ctx) {
       return "Workspace context unavailable.";
     }
-    ctx.context.appendTodo(item);
-    return `Added todo: ${item}`;
+    const files = Array.from(ctx.context.vfs.keys());
+    return files.length > 0 ? files.join("\n") : "(no files in workspace)";
   },
 });

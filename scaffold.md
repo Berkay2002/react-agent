@@ -16,7 +16,6 @@ Create this scaffolding.
 │  │  │  └─ exa.ts               # exa search tool
 │  │  ├─ vfs/
 │  │  │  ├─ read-file.ts         # read from VFS (no approval)
-│  │  │  ├─ write-file.ts        # write to VFS (needsApproval: true)
 │  │  │  ├─ edit-file.ts         # regex edit (needsApproval: true)
 │  │  │  └─ todo-write.ts        # append todo to VFS
 │  │  └─ text/

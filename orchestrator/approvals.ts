@@ -228,21 +228,7 @@ function analyzeInterruption(
   let byteDelta: number | undefined;
   let summary = `Approval requested for tool "${toolName}".`;
 
-  if (toolName === "write_file") {
-    path = typeof parsedArguments.path === "string" ? parsedArguments.path : undefined;
-    const nextContent =
-      typeof parsedArguments.content === "string" ? parsedArguments.content : "";
-    const currentContent = path ? workspace?.get(path)?.content ?? "" : "";
-    byteDelta =
-      Buffer.byteLength(nextContent, "utf8") -
-      Buffer.byteLength(currentContent, "utf8");
-    diff = path ? createUnifiedDiff(currentContent, nextContent, path) : undefined;
-    summary = path
-      ? `write_file → ${path} (${formatDelta(byteDelta)})`
-      : "write_file → (missing path)";
-    metadata.beforeBytes = Buffer.byteLength(currentContent, "utf8");
-    metadata.afterBytes = Buffer.byteLength(nextContent, "utf8");
-  } else if (toolName === "edit_file") {
+  if (toolName === "edit_file") {
     path = typeof parsedArguments.path === "string" ? parsedArguments.path : undefined;
     const findPattern =
       typeof parsedArguments.find === "string" ? parsedArguments.find : "";

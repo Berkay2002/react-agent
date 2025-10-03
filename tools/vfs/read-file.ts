@@ -1,13 +1,20 @@
 import { type RunContext, tool } from "@openai/agents";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import type { WorkspaceState } from "../../state/workspace";
 
+const promptPath = fileURLToPath(
+  new URL("../../prompts/read-file.md", import.meta.url),
+);
+const description = await readFile(promptPath, "utf8");
+
 export default tool({
   name: "read_file",
-  description: "Read a UTF-8 file from the virtual workspace.",
+  description,
   parameters: z.object({ path: z.string() }),
   strict: true,
-  execute: async ({ path }, ctx?: RunContext<WorkspaceState>) => {
+  execute: ({ path }, ctx?: RunContext<WorkspaceState>) => {
     if (!ctx) {
       return "Workspace context unavailable.";
     }

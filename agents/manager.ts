@@ -4,8 +4,9 @@ import { gemini25Pro } from "../model/google";
 import rewriteTool from "../tools/text/rewrite";
 import summarizeTool from "../tools/text/summarize";
 import editFile from "../tools/vfs/edit-file";
+import ls from "../tools/vfs/ls";
+import readFile from "../tools/vfs/read-file";
 import todoWrite from "../tools/vfs/todo-write";
-import writeFile from "../tools/vfs/write-file";
 import { Researcher } from "./researcher";
 
 const managerPrompt = readFileSync(
@@ -17,6 +18,6 @@ export const Manager = new Agent({
   name: "Manager",
   instructions: managerPrompt,
   model: gemini25Pro,
-  tools: [rewriteTool, summarizeTool, writeFile, editFile, todoWrite],
+  tools: [rewriteTool, summarizeTool, ls, readFile, editFile, todoWrite],
   handoffs: [Researcher],
 });
